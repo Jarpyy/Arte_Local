@@ -1,0 +1,155 @@
+/* =========================================
+   TIPOGRAFÍA Y RESET
+   ========================================= */
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif; /* Tipografía clásica de la época */
+    -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================
+   FONDO Y CONTENEDOR (Naturaleza)
+   ========================================= */
+.hero-page {
+    width: 100vw;
+    height: 100vh;
+    /* Tu imagen WebP super optimizada */
+    background-image: url('https://frutigeraeroarchive.org/images/wallpapers/perfect_hue/perfect_hue_177.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Opcional: Un overlay sutil para que el texto resalte más si el cielo es muy claro */
+.hero-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,162,255,0.2) 100%);
+    pointer-events: none;
+}
+
+/* =========================================
+   PANEL DE VIDRIO (Glassmorphism Optimizado)
+   ========================================= */
+.hero-content {
+    /* Fondo translúcido ligero, no castiga la GPU */
+    background: rgba(255, 255, 255, 0.65);
+    /* Efecto de blur (opcional, si se pone pesado en móviles se puede quitar) */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    /* Bordes brillantes simulando vidrio cortado */
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-top: 2px solid rgba(255, 255, 255, 1);
+    border-radius: 24px;
+    
+    /* Sombras suaves hacia afuera y brillo interno */
+    box-shadow: 
+        0 10px 30px rgba(0, 100, 200, 0.15),
+        inset 0 0 20px rgba(255, 255, 255, 0.8);
+        
+    padding: 3rem;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+/* =========================================
+   TEXTOS (Contraste Aero)
+   ========================================= */
+.brand {
+    display: inline-block;
+    background: #0078D7;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.4);
+}
+
+.hero-content h1 {
+    color: #004d80;
+    font-size: 2.2rem;
+    margin: 0 0 1rem 0;
+    text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+}
+
+.hero-content p {
+    color: #003355;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+}
+
+/* =========================================
+   BOTONES GLOSSY (Plástico/Vidrio abombado)
+   ========================================= */
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.aero-button {
+    text-decoration: none;
+    font-weight: bold;
+    padding: 12px 24px;
+    border-radius: 30px; /* Forma de píldora */
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.6);
+}
+
+/* El destello de luz dinámico (animado por GPU) */
+.aero-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    transition: transform 0.5s ease;
+}
+
+.aero-button:hover::after {
+    transform: skewX(-20deg) translateX(400%);
+}
+
+.aero-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Botón Principal (Azul Cyan) */
+.primary-button {
+    color: white;
+    /* Gradiente típico glossy: arriba brillante, abajo oscuro */
+    background: linear-gradient(to bottom, #4dc6ff 0%, #0088cc 50%, #006699 51%, #0088cc 100%);
+    box-shadow: 
+        0 4px 10px rgba(0, 136, 204, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.2);
+    border-color: #005580;
+}
+
+/* Botón Secundario (Verde Lima o Blanco Transparente) */
+.secondary-button {
+    color: #006699;
+    background: linear-gradient(to bottom, #ffffff 0%, #e6f7ff 50%, #cceeff 51%, #e6f7ff 100%);
+    box-shadow: 
+        0 4px 10px rgba(0, 0, 0, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 1),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
