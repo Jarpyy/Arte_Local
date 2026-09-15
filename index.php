@@ -1,9 +1,8 @@
 <?php
-// index.php — REEMPLAZAR TODO EL ARCHIVO
 
 require_once __DIR__ . '/includes/auth.php';
 
-redirigirSiAutenticado('dashboard/dashboard.php');
+redirigirSiAutenticado('dashboard.php');
 
 ?>
 

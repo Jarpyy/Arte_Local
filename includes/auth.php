@@ -52,7 +52,7 @@ function requerirAutenticacion(string $rutaLogin = 'login.php'): void
  *
  * @param string $rutaDashboard Ruta relativa a dashboard.php desde el archivo que llama.
  */
-function redirigirSiAutenticado(string $rutaDashboard = 'dashboard/dashboard.php'): void
+function redirigirSiAutenticado(string $rutaDashboard = 'dashboard.php'): void
 {
     iniciarSesionSegura();
 

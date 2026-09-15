@@ -1,0 +1,863 @@
+/* ============================================================
+   DASHBOARD.CSS — Panel Admin / Panel Cliente
+   Extiende la identidad visual de style.css (import abajo).
+   Reutiliza las variables y patrones ya definidos en auth.css
+   (glass cards, aero-button, badges de marca) para que el
+   panel privado se sienta parte del mismo producto que el
+   landing y el login.
+   NOTA: se asume style.css en el mismo directorio (assets/css/).
+   ============================================================ */
+
+@import url("style.css");
+
+/* =========================================
+   VARIABLES LOCALES (solo dashboard)
+   Mismo azul base que auth.css + acentos de
+   estado (naranja/verde/rojo/amarillo solar)
+   para KPIs, badges y navegación.
+   ========================================= */
+:root {
+    --dash-blue-deep:   #004d80;
+    --dash-blue-text:   #003355;
+    --dash-glow:        #4dc6ff;
+    --dash-blue-mid:    #0088cc;
+    --dash-blue-dark:   #006699;
+
+    --dash-glass-bg:     rgba(255, 255, 255, 0.16);
+    --dash-glass-border: rgba(255, 255, 255, 0.35);
+    --dash-glass-top:    rgba(255, 255, 255, 0.75);
+
+    --dash-header-top:    rgba(255, 255, 255, 0.92);
+    --dash-header-bottom: rgba(214, 240, 255, 0.75);
+
+    /* acentos de estado — usados en KPIs y badges */
+    --dash-verde-hierba: #2f9e4f;
+    --dash-verde-lima:   #8bd450;
+    --dash-verde-bg:     rgba(139, 212, 80, 0.22);
+
+    --dash-naranja:      #ff9a3c;
+    --dash-naranja-deep: #b85f10;
+    --dash-naranja-bg:   rgba(255, 154, 60, 0.22);
+
+    --dash-rojo:         #e2564a;
+    --dash-rojo-deep:    #8a1f10;
+    --dash-rojo-bg:      rgba(226, 86, 74, 0.18);
+
+    --dash-cyan-bg:      rgba(77, 198, 255, 0.22);
+    --dash-amarillo:     #ffd54d;
+}
+
+/* =========================================
+   FONDO GENERAL DEL PANEL (cielo suavizado)
+   Mismo lenguaje que .auth-page pero más
+   plano: prioriza la legibilidad de datos
+   sobre el impacto visual del landing.
+   ========================================= */
+body.dashboard-cliente,
+body.dashboard-admin {
+    min-height: 100vh;
+    background-image:
+        radial-gradient(circle at 90% 0%, rgba(255, 213, 77, 0.35) 0%, rgba(255, 213, 77, 0) 22%),
+        radial-gradient(circle at 12% 6%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 10%),
+        linear-gradient(to bottom, #d6f1ff 0%, #a9dcf7 35%, #6fc8f2 100%);
+    background-attachment: fixed;
+}
+
+/* Nubes decorativas sutiles y estáticas (sin animación pesada,
+   para no competir con la lectura de datos) */
+body.dashboard-cliente::before,
+body.dashboard-admin::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        radial-gradient(ellipse 120px 34px at 15% 8%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%),
+        radial-gradient(ellipse 90px 26px at 78% 4%, rgba(255,255,255,0.4), rgba(255,255,255,0) 70%);
+}
+
+/* =========================================
+   ENCABEZADO / BARRA SUPERIOR (chrome glossy)
+   ========================================= */
+.panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.75rem;
+    background: linear-gradient(to bottom, var(--dash-header-top), var(--dash-header-bottom));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 14px rgba(0, 60, 100, 0.18);
+}
+
+.panel-header__brand {
+    display: inline-flex;
+    align-items: center;
+    background: #0078D7;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.45);
+}
+
+.panel-header__nav {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.panel-header__nav a {
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dash-blue-text);
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.panel-header__nav a:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.panel-header__nav a.activo {
+    color: #fff;
+    background: linear-gradient(to bottom, var(--dash-glow) 0%, var(--dash-blue-mid) 55%, var(--dash-blue-dark) 100%);
+    box-shadow:
+        0 3px 8px rgba(0, 136, 204, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* =========================================
+   CONTENEDOR PRINCIPAL
+   ========================================= */
+.panel-contenido {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* =========================================
+   TARJETA BASE (glass card reutilizable)
+   Sirve de base para bienvenida, accesos,
+   KPIs y tablas: todas comparten el mismo
+   "vidrio" para mantener coherencia visual.
+   ========================================= */
+.tarjeta {
+    background: var(--dash-glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--dash-glass-border);
+    border-top: 1px solid var(--dash-glass-top);
+    border-radius: 20px;
+    box-shadow:
+        0 14px 32px rgba(0, 40, 80, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Brillo diagonal superior, igual criterio que .auth-card::before */
+.tarjeta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 6%;
+    width: 88%;
+    height: 38%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+    border-radius: 20px 20px 60% 60% / 20px 20px 100% 100%;
+    pointer-events: none;
+}
+
+.tarjeta h2 {
+    margin: 0 0 1.1rem;
+    font-size: 1.15rem;
+    color: var(--dash-blue-deep);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.tarjeta--bienvenida h1 {
+    margin: 0 0 0.4rem;
+    font-size: 1.6rem;
+    color: var(--dash-blue-deep);
+    text-shadow: 0 2px 4px rgba(255, 255, 255, 0.7);
+}
+
+.tarjeta--bienvenida p {
+    margin: 0;
+    color: var(--dash-blue-text);
+}
+
+/* =========================================
+   ACCESOS RÁPIDOS (cliente) / GRID GENÉRICO
+   ========================================= */
+.accesos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.acceso-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    text-decoration: none;
+    padding: 1.1rem 1.25rem;
+    border-radius: 16px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(230, 247, 255, 0.55));
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 6px 14px rgba(0, 60, 100, 0.12),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.acceso-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 10px 20px rgba(0, 60, 100, 0.18),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.acceso-card__icono {
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.acceso-card__titulo {
+    font-weight: bold;
+    color: var(--dash-blue-deep);
+}
+
+.acceso-card__descripcion {
+    font-size: 0.85rem;
+    color: var(--dash-blue-text);
+    opacity: 0.85;
+}
+
+/* =========================================
+   KPIs (Panel Admin — sección "Overview")
+   Cada KPI es un botón/tarjeta convexo con
+   un acento de color según su naturaleza.
+   ========================================= */
+.kpis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.15rem 1.3rem;
+    border-radius: 18px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.55));
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-top: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+        0 8px 18px rgba(0, 60, 100, 0.14),
+        inset 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.kpi-card__icono {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    border-radius: 50%;
+    background: var(--dash-cyan-bg);
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6);
+}
+
+.kpi-card__valor {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--dash-blue-deep);
+    line-height: 1.1;
+}
+
+.kpi-card__etiqueta {
+    font-size: 0.82rem;
+    color: var(--dash-blue-text);
+    opacity: 0.85;
+}
+
+.kpi-card--alerta .kpi-card__icono { background: var(--dash-naranja-bg); }
+.kpi-card--exito  .kpi-card__icono { background: var(--dash-verde-bg); }
+.kpi-card--riesgo .kpi-card__icono { background: var(--dash-rojo-bg); }
+
+/* =========================================
+   NAVEGACIÓN DE MÓDULOS CRUD (admin)
+   Pensada como fila superior de "pestañas"
+   glossy; con flex-wrap funciona igual de
+   bien como bloque lateral apilado si se
+   agrega el modificador --vertical.
+   ========================================= */
+.modulos-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.modulos-nav--vertical {
+    flex-direction: column;
+}
+
+.modulos-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--dash-blue-deep);
+    padding: 0.6rem 1.1rem;
+    border-radius: 14px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(230, 247, 255, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.modulos-nav a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 60, 100, 0.16), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* =========================================
+   TABLAS DE DATOS (últimos movimientos,
+   pedidos, envíos)
+   ========================================= */
+.tabla-aero-wrap {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.tabla-aero {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.55);
+    font-size: 0.92rem;
+}
+
+.tabla-aero thead th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.78rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: linear-gradient(to bottom, var(--dash-glow) 0%, var(--dash-blue-mid) 60%, var(--dash-blue-dark) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.tabla-aero tbody td {
+    padding: 0.75rem 1rem;
+    color: var(--dash-blue-text);
+    border-bottom: 1px solid rgba(0, 60, 100, 0.08);
+}
+
+.tabla-aero tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.tabla-aero tbody tr:hover {
+    background: rgba(77, 198, 255, 0.16);
+}
+
+/* =========================================
+   BADGES DE ESTADO
+   ========================================= */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.badge::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 4px currentColor;
+}
+
+.badge--pendiente {
+    color: var(--dash-naranja-deep);
+    background: var(--dash-naranja-bg);
+    border: 1px solid rgba(255, 154, 60, 0.45);
+}
+
+.badge--preparando {
+    color: var(--dash-blue-dark);
+    background: var(--dash-cyan-bg);
+    border: 1px solid rgba(77, 198, 255, 0.45);
+}
+
+.badge--enviado {
+    color: var(--dash-blue-deep);
+    background: rgba(0, 136, 204, 0.18);
+    border: 1px solid rgba(0, 136, 204, 0.4);
+}
+
+.badge--entregado,
+.badge--activo {
+    color: var(--dash-verde-hierba);
+    background: var(--dash-verde-bg);
+    border: 1px solid rgba(47, 158, 79, 0.4);
+}
+
+.badge--cancelado,
+.badge--inactivo,
+.badge--agotado {
+    color: var(--dash-rojo-deep);
+    background: var(--dash-rojo-bg);
+    border: 1px solid rgba(226, 86, 74, 0.4);
+}
+
+/* =========================================
+   ESTADOS VACÍOS / FEEDBACK
+   ========================================= */
+.estado-vacio {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--dash-blue-text);
+    opacity: 0.75;
+}
+
+.estado-vacio__icono {
+    font-size: 1.8rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+
+.galeria-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-end;
+}
+
+.galeria-filtros .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 180px;
+}
+
+.galeria-filtros label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dash-blue-text);
+}
+
+.galeria-filtros select {
+    padding: 0.55rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(230, 247, 255, 0.6));
+    color: var(--dash-blue-text);
+    font-size: 0.9rem;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* =========================================
+   GALERÍA — FEED VISUAL COMUNITARIO
+   Grid con jerarquía: la obra destacada
+   ocupa doble espacio, el resto queda
+   en una trama uniforme pero no rígida.
+   ========================================= */
+.galeria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.obra-card {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.obra-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 20px 38px rgba(0, 40, 80, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.obra-card--destacada {
+    grid-column: span 2;
+    grid-row: span 2;
+}
+
+.obra-card__imagen {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+}
+
+.obra-card--destacada .obra-card__imagen {
+    aspect-ratio: 16 / 11;
+}
+
+.obra-card__enlace-imagen {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.obra-card__imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.obra-card__imagen--error img {
+    visibility: hidden;
+}
+
+.obra-card__imagen-placeholder,
+.obra-card__imagen--error::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.5), rgba(255,255,255,0) 40%),
+        linear-gradient(135deg, #bfe6fb, #7fc4ea);
+}
+
+.obra-card__badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.obra-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1.1rem 1.25rem 1.35rem;
+}
+
+.obra-card__tipo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--dash-blue-mid);
+}
+
+.obra-card__titulo {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.3;
+    color: var(--dash-blue-deep);
+}
+
+.obra-card__titulo a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.obra-card__titulo a:hover {
+    text-decoration: underline;
+}
+
+.obra-card--destacada .obra-card__titulo {
+    font-size: 1.3rem;
+}
+
+.obra-card__artista {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--dash-blue-text);
+    opacity: 0.85;
+}
+
+.obra-card__pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.obra-card__precio {
+    font-weight: bold;
+    font-size: 1.05rem;
+    color: var(--dash-blue-deep);
+}
+
+.obra-card__form {
+    margin: 0;
+}
+
+.obra-card__boton {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.obra-card__boton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Detalle mínimo de obra (soporte a la navegación de esta fase) */
+.obra-detalle {
+    display: grid;
+    grid-template-columns: minmax(260px, 420px) 1fr;
+    gap: 2rem;
+}
+
+.obra-detalle__imagen {
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+}
+
+.obra-detalle__imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.obra-detalle__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+/* assets/css/dashboard.css — AGREGAR AL FINAL (breadcrumbs + perfil de artista; .obra-detalle ya existía de la fase anterior) */
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--dash-blue-text);
+    opacity: 0.85;
+}
+
+.breadcrumbs a {
+    color: var(--dash-blue-mid);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumbs__separador {
+    opacity: 0.6;
+}
+
+.breadcrumbs__actual {
+    opacity: 0.8;
+}
+
+/* --- Detalle de obra: separación clara comercial / narrativo --- */
+.obra-detalle__titulo {
+    margin: 0.2rem 0 0.1rem;
+    font-size: 1.6rem;
+    color: var(--dash-blue-deep);
+}
+
+.obra-detalle__artista {
+    display: inline-block;
+    color: var(--dash-blue-mid);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.obra-detalle__artista:hover {
+    text-decoration: underline;
+}
+
+.obra-detalle__categoria {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.obra-detalle__comercial {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.9rem 0;
+    margin: 0.4rem 0;
+    border-top: 1px solid rgba(0, 60, 100, 0.1);
+    border-bottom: 1px solid rgba(0, 60, 100, 0.1);
+}
+
+.obra-detalle__narrativa {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 60, 100, 0.08);
+}
+
+.obra-detalle__narrativa h2 {
+    font-size: 1rem;
+    color: var(--dash-blue-deep);
+    margin: 0 0 0.5rem;
+}
+
+.obra-detalle__narrativa p {
+    color: var(--dash-blue-text);
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.galeria-grid--compacta {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.ver-mas-artista {
+    display: inline-block;
+    margin-top: 1.25rem;
+    color: var(--dash-blue-mid);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.ver-mas-artista:hover {
+    text-decoration: underline;
+}
+
+/* --- Perfil público de artista --- */
+.perfil-artista {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.perfil-artista__foto img,
+.perfil-artista__foto-placeholder {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+}
+
+.perfil-artista__foto-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(to bottom, var(--dash-glow), var(--dash-blue-dark));
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.perfil-artista__info h1 {
+    margin: 0 0 0.3rem;
+    color: var(--dash-blue-deep);
+}
+
+.perfil-artista__bio {
+    margin: 0;
+    color: var(--dash-blue-text);
+    line-height: 1.6;
+    max-width: 60ch;
+}
+
+@media (max-width: 720px) {
+    .perfil-artista {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 900px) {
+    .galeria-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .obra-card--destacada {
+        grid-column: span 2;
+        grid-row: span 1;
+    }
+
+    .obra-detalle {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .galeria-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .obra-card--destacada {
+        grid-column: span 1;
+    }
+
+    .galeria-filtros {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 720px) {
+    .panel-header {
+        flex-wrap: wrap;
+        padding: 0.75rem 1rem;
+    }
+
+    .panel-contenido {
+        padding: 1.5rem 1rem 2.5rem;
+        gap: 1.25rem;
+    }
+
+    .tarjeta {
+        padding: 1.35rem 1.4rem;
+    }
+
+    .kpi-card {
+        padding: 1rem;
+    }
+}

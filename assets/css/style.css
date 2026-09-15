@@ -14,7 +14,7 @@ body {
     width: 100vw;
     height: 100vh;
     /* Tu imagen WebP super optimizada */
-    background-image: url('https://frutigeraeroarchive.org/images/wallpapers/perfect_hue/perfect_hue_177.jpg');
+    background-image: url(../images/asadal_stock_66.webp);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -34,25 +34,24 @@ body {
     pointer-events: none;
 }
 
-/* =========================================
-   PANEL DE VIDRIO (Glassmorphism Optimizado)
-   ========================================= */
 .hero-content {
-    /* Fondo translúcido ligero, no castiga la GPU */
-    background: rgba(255, 255, 255, 0.65);
-    /* Efecto de blur (opcional, si se pone pesado en móviles se puede quitar) */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* Vidrio equilibrado: tinte suave y menos brillante */
+    background: rgba(255, 255, 255, 0.04);
     
-    /* Bordes brillantes simulando vidrio cortado */
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    border-top: 2px solid rgba(255, 255, 255, 1);
+    /* Desenfoque mínimo para efecto de cristal sutil */
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    
+    /* Biselado de bordes atenudo */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.6);  /* Destello superior suavizado */
+    border-left: 1px solid rgba(255, 255, 255, 0.35); /* Destello lateral suavizado */
     border-radius: 24px;
     
-    /* Sombras suaves hacia afuera y brillo interno */
+    /* Sombra proyectada y brillo interno atenuados */
     box-shadow: 
-        0 10px 30px rgba(0, 100, 200, 0.15),
-        inset 0 0 20px rgba(255, 255, 255, 0.8);
+        0 20px 40px rgba(0, 40, 80, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4); 
         
     padding: 3rem;
     max-width: 500px;
@@ -104,11 +103,15 @@ body {
     text-decoration: none;
     font-weight: bold;
     padding: 12px 24px;
-    border-radius: 30px; /* Forma de píldora */
+    border-radius: 30px; 
     position: relative;
     overflow: hidden;
     transition: all 0.2s ease;
-    border: 1px solid rgba(255,255,255,0.6);
+    
+    /* Efecto de marco de vidrio grueso */
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid rgba(255, 255, 255, 0.85); /* Luz pegando arriba */
+    border-bottom: 2px solid rgba(0, 0, 0, 0.15); /* Sombra debajo */
 }
 
 /* El destello de luz dinámico (animado por GPU) */
@@ -152,4 +155,38 @@ body {
         0 4px 10px rgba(0, 0, 0, 0.1),
         inset 0 1px 2px rgba(255, 255, 255, 1),
         inset 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
+/* =========================================
+   RESPONSIVE DESIGN (Móviles)
+   ========================================= */
+@media (max-width: 600px) {
+    .hero-content {
+        /* Márgenes laterales para que respire en el celular */
+        margin: 0 1.5rem;
+        padding: 2rem 1.5rem;
+        /* Reducimos un poco el desenfoque en móviles para mejor rendimiento */
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .hero-content h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-actions {
+        /* Apilamos los botones uno arriba del otro */
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .aero-button {
+        /* Hacemos que los botones ocupen todo el ancho del contenedor */
+        width: 100%;
+        box-sizing: border-box;
+    }
 }
