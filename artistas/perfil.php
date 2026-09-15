@@ -51,6 +51,17 @@ $obras = $consultaObras->fetchAll();
 
         <section class="tarjeta">
             <p><a href="../gallery/index.php">&larr; Volver a la galería</a></p>
+
+            <?php if (!empty($artista['foto'])): ?>
+                <img
+                    src="<?= htmlspecialchars('../' . $artista['foto']) ?>"
+                    alt="Foto de <?= htmlspecialchars($artista['nombre']) ?>"
+                    style="width:140px;height:140px;object-fit:cover;border-radius:50%;"
+                >
+            <?php else: ?>
+                <div style="width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,#bfe6fb,#7fc4ea);"></div>
+            <?php endif; ?>
+
             <h1><?= htmlspecialchars($artista['nombre']) ?></h1>
             <?php if (!empty($artista['bio'])): ?>
                 <p><?= nl2br(htmlspecialchars($artista['bio'])) ?></p>
