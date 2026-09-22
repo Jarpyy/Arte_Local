@@ -72,6 +72,7 @@ $badgeEnvio = [
                                 <th>Total</th>
                                 <th>Estado</th>
                                 <th>Envío</th>
+                                <th>Comprobante</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -93,6 +94,9 @@ $badgeEnvio = [
                                         <?php else: ?>
                                             &mdash;
                                         <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="../checkout/comprobante.php?id=<?= (int) $pedido['id'] ?>">Ver comprobante</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

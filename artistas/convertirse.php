@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/validacion.php';
 
 requerirAutenticacion('../login.php');
 
@@ -23,13 +24,6 @@ $errores = $_SESSION['convertirse_errores'] ?? [];
 $valores = $_SESSION['convertirse_valores'] ?? [];
 unset($_SESSION['convertirse_errores'], $_SESSION['convertirse_valores']);
 
-const EXTENSIONES_FOTO_PERMITIDAS = [
-    'jpg'  => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'png'  => 'image/png',
-    'webp' => 'image/webp',
-];
-const TAMANO_MAXIMO_FOTO = 5 * 1024 * 1024; // 5 MB
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -61,21 +55,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $archivo = $_FILES['foto'] ?? null;
     $hayArchivo = $archivo && $archivo['error'] !== UPLOAD_ERR_NO_FILE;
 
-    if ($hayArchivo) {
-        if ($archivo['error'] !== UPLOAD_ERR_OK) {
-            $errores[] = 'Ocurrió un error al subir la foto.';
-        } elseif ($archivo['size'] > TAMANO_MAXIMO_FOTO) {
-            $errores[] = 'La foto no puede superar los 5 MB.';
+        if ($hayArchivo) {
+        $resultadoArchivo = validarArchivoImagen($archivo, TAMANO_MAXIMO_IMAGEN, EXTENSIONES_PERMITIDAS);
+
+        if (!$resultadoArchivo['ok']) {
+            $errores[] = $resultadoArchivo['error'];
         } else {
-            $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-            $mimeReal = mime_content_type($archivo['tmp_name']);
+            $resultadoDimensiones = validarDimensionesImagen($archivo['tmp_name'], MEGAPIXELES_MAXIMOS);
 
-            $extensionValida = array_key_exists($extension, EXTENSIONES_FOTO_PERMITIDAS);
-            $mimeValido = $extensionValida && $mimeReal === EXTENSIONES_FOTO_PERMITIDAS[$extension];
-
-            if (!$extensionValida || !$mimeValido) {
-                $errores[] = 'La foto debe ser JPG, PNG o WEBP.';
+            if (!$resultadoDimensiones['ok']) {
+                $errores[] = $resultadoDimensiones['error'];
             } else {
+                $extension = $resultadoArchivo['extension'];
                 $nombreArchivo = bin2hex(random_bytes(16)) . '.' . $extension;
                 $directorioDestino = __DIR__ . '/../assets/images/artistas/';
 

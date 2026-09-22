@@ -62,8 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// carrito/index.php — REEMPLAZAR SOLO ESTE BLOQUE (revalidación de disponibilidad al listar)
 $items = $conexion->prepare(
-    'SELECT ci.id AS item_id, ci.cantidad, o.id AS obra_id, o.titulo, o.precio, o.imagen
+    'SELECT ci.id AS item_id, ci.cantidad, o.id AS obra_id, o.titulo, o.precio, o.imagen,
+            o.stock, o.disponible AS obra_disponible
      FROM carrito_items ci
      INNER JOIN obras o ON o.id = ci.obra_id
      WHERE ci.usuario_id = :usuario
@@ -73,9 +75,19 @@ $items->execute(['usuario' => $usuarioId]);
 $itemsCarrito = $items->fetchAll();
 
 $total = 0;
-foreach ($itemsCarrito as $item) {
+$hayNoDisponibles = false;
+
+foreach ($itemsCarrito as &$item) {
+    $stockFinito = $item['stock'] !== null;
+    $item['disponible_ahora'] = (bool) $item['obra_disponible'] && (!$stockFinito || (int) $item['stock'] > 0);
+
+    if (!$item['disponible_ahora']) {
+        $hayNoDisponibles = true;
+    }
+
     $total += (float) $item['precio'] * (int) $item['cantidad'];
 }
+unset($item);
 
 ?>
 <!DOCTYPE html>
@@ -121,10 +133,12 @@ foreach ($itemsCarrito as $item) {
                                 <th>Obra</th>
                                 <th>Cantidad</th>
                                 <th>Precio</th>
+                                <th>Estado</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
+                            
                             <?php foreach ($itemsCarrito as $item): ?>
                                 <tr>
                                     <td>
@@ -134,6 +148,11 @@ foreach ($itemsCarrito as $item) {
                                     </td>
                                     <td><?= (int) $item['cantidad'] ?></td>
                                     <td>$<?= number_format((float) $item['precio'], 2, ',', '.') ?></td>
+                                    <td>
+                                        <?php if (!$item['disponible_ahora']): ?>
+                                            <span class="badge badge--agotado">Ya no disponible</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <form method="post" action="index.php">
                                             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
@@ -149,7 +168,12 @@ foreach ($itemsCarrito as $item) {
                 </div>
 
                 <p><strong>Total: $<?= number_format($total, 2, ',', '.') ?></strong></p>
-                <p><a href="../checkout/index.php" class="aero-button primary-button">Finalizar compra</a></p>
+
+                <?php if ($hayNoDisponibles): ?>
+                    <p class="badge badge--agotado">Quitá las obras marcadas como "Ya no disponible" antes de continuar.</p>
+                <?php else: ?>
+                    <p><a href="../checkout/index.php" class="aero-button primary-button">Finalizar compra</a></p>
+                <?php endif; ?>
             <?php endif; ?>
 
         </section>

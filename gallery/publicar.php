@@ -2,10 +2,173 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/validacion.php';
 
 requerirAutenticacion('../login.php');
 
 $usuarioId = $_SESSION['usuario_id'];
+
+
+    $directorioPublico = __DIR__ . '/../assets/images/obras/';
+    $directorioOriginal = __DIR__ . '/../storage/obras_originales/';
+
+    foreach ([$directorioPublico, $directorioOriginal] as $dir) {
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return ['ok' => false, 'error' => 'No se pudo preparar el almacenamiento de imágenes.'];
+        }
+    }
+
+    $identificador = bin2hex(random_bytes(16));
+    $rutaOriginal = $directorioOriginal . $identificador . '.' . $extension;
+
+    // 1) El original se conserva sin recodificar, para no perder calidad de entrega futura.
+    if (!move_uploaded_file($tmpPath, $rutaOriginal)) {
+        return ['ok' => false, 'error' => 'No se pudo guardar la imagen. Intentá nuevamente.'];
+    }
+
+    // 2) Cargar con GD según el tipo real ya validado afuera (finfo + getimagesize)
+    $tieneAlfaOrigen = in_array($extension, ['png', 'webp'], true);
+
+    $imagen = match ($extension) {
+        'jpg', 'jpeg' => @imagecreatefromjpeg($rutaOriginal),
+        'png' => @imagecreatefrompng($rutaOriginal),
+        'webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($rutaOriginal) : false,
+        default => false,
+    };
+
+    if ($imagen === false) {
+        unlink($rutaOriginal);
+        return ['ok' => false, 'error' => 'La imagen está dañada o no se pudo procesar.'];
+    }
+
+    // 3) Redimensionar solo si excede el ancho máximo (nunca se agranda)
+    $anchoOriginal = imagesx($imagen);
+    $altoOriginal = imagesy($imagen);
+
+    if ($anchoOriginal > ANCHO_MAXIMO_PUBLICO) {
+        $altoNuevo = (int) round($altoOriginal * (ANCHO_MAXIMO_PUBLICO / $anchoOriginal));
+        $redimensionada = imagecreatetruecolor(ANCHO_MAXIMO_PUBLICO, $altoNuevo);
+
+        // Lienzo transparente antes de copiar encima: evita fondos negros con PNG/WebP
+        imagealphablending($redimensionada, false);
+        imagesavealpha($redimensionada, true);
+        $transparente = imagecolorallocatealpha($redimensionada, 0, 0, 0, 127);
+        imagefill($redimensionada, 0, 0, $transparente);
+
+        imagealphablending($redimensionada, true);
+        imagecopyresampled($redimensionada, $imagen, 0, 0, 0, 0, ANCHO_MAXIMO_PUBLICO, $altoNuevo, $anchoOriginal, $altoOriginal);
+        imagedestroy($imagen);
+        $imagen = $redimensionada;
+    }
+
+    // gallery/publicar.php — REEMPLAZAR SOLO ESTE BLOQUE (paso 4, dentro de procesarImagenObra(), entre el resize y el guardado)
+    // 4) Marca de agua diagonal, grande y repetida sin depender de fuente .ttf externa.
+    //    El texto se dibuja primero en un lienzo chico (fuente bitmap) y se escala hacia
+    //    arriba con imagecopyresampled — así se agranda sin necesitar una fuente TTF.
+    $ancho = imagesx($imagen);
+    $alto = imagesy($imagen);
+
+    $texto = 'Arte Local';
+    $fuente = 5; // fuente bitmap más grande disponible nativamente en GD
+    $anchoTextoBase = imagefontwidth($fuente) * strlen($texto);
+    $altoTextoBase = imagefontheight($fuente);
+
+    // --- Tile base: el texto "crudo", con trazo doble para simular negrita ---
+    $tileBase = imagecreatetruecolor($anchoTextoBase + 2, $altoTextoBase + 2);
+    imagealphablending($tileBase, false);
+    imagesavealpha($tileBase, true);
+    $transparenteBase = imagecolorallocatealpha($tileBase, 0, 0, 0, 127);
+    imagefill($tileBase, 0, 0, $transparenteBase);
+
+    imagealphablending($tileBase, true);
+    $colorTexto = imagecolorallocatealpha($tileBase, 255, 255, 255, 55); // más opaco que antes (era 90)
+    imagestring($tileBase, $fuente, 0, 0, $texto, $colorTexto);
+    imagestring($tileBase, $fuente, 1, 0, $texto, $colorTexto); // trazo duplicado = negrita
+    imagestring($tileBase, $fuente, 0, 1, $texto, $colorTexto);
+    imagestring($tileBase, $fuente, 1, 1, $texto, $colorTexto);
+
+    // --- Escalar el tile hacia arriba: esto es lo que hace el texto "más grande" ---
+    $escala = max(3, (int) round($ancho / 400)); // se agranda más todavía en imágenes grandes
+    $anchoTileGrande = $anchoTextoBase * $escala;
+    $altoTileGrande = $altoTextoBase * $escala;
+
+    $tileGrande = imagecreatetruecolor($anchoTileGrande, $altoTileGrande);
+    imagealphablending($tileGrande, false);
+    imagesavealpha($tileGrande, true);
+    $transparenteGrande = imagecolorallocatealpha($tileGrande, 0, 0, 0, 127);
+    imagefill($tileGrande, 0, 0, $transparenteGrande);
+    imagecopyresampled($tileGrande, $tileBase, 0, 0, 0, 0, $anchoTileGrande, $altoTileGrande, $anchoTextoBase + 2, $altoTextoBase + 2);
+    imagedestroy($tileBase);
+
+    // --- Lienzo diagonal: se tilea el texto ya agrandado, más denso que antes ---
+    $diagonal = (int) ceil(sqrt($ancho ** 2 + $alto ** 2));
+    $lienzoMarca = imagecreatetruecolor($diagonal, $diagonal);
+    imagealphablending($lienzoMarca, false);
+    imagesavealpha($lienzoMarca, true);
+    $fondoTransparente = imagecolorallocatealpha($lienzoMarca, 0, 0, 0, 127);
+    imagefill($lienzoMarca, 0, 0, $fondoTransparente);
+    imagealphablending($lienzoMarca, true);
+
+    // Espaciado ajustado: más repeticiones = look "desbordante" en vez de una marca aislada
+    $espacioX = (int) ($anchoTileGrande * 1.3);
+    $espacioY = (int) ($altoTileGrande * 2.2);
+
+    for ($y = -$altoTileGrande; $y < $diagonal; $y += $espacioY) {
+        for ($x = -$anchoTileGrande; $x < $diagonal; $x += $espacioX) {
+            imagecopy($lienzoMarca, $tileGrande, $x, $y, 0, 0, $anchoTileGrande, $altoTileGrande);
+        }
+    }
+    imagedestroy($tileGrande);
+
+    $lienzoRotado = imagerotate($lienzoMarca, 30, $fondoTransparente);
+    imagedestroy($lienzoMarca);
+    imagesavealpha($lienzoRotado, true);
+
+    // Recortar el centro del lienzo rotado al tamaño exacto de la imagen final
+    $offsetX = (int) ((imagesx($lienzoRotado) - $ancho) / 2);
+    $offsetY = (int) ((imagesy($lienzoRotado) - $alto) / 2);
+
+   // gallery/publicar.php — REEMPLAZAR SOLO ESTE BLOQUE (falta insertar TODO esto entre el final de la marca de agua y el "if (!$guardadoOk)")
+    imagealphablending($imagen, true);
+    imagecopy($imagen, $lienzoRotado, 0, 0, $offsetX, $offsetY, $ancho, $alto);
+    imagedestroy($lienzoRotado);
+
+    // 5) Guardar versión pública: WebP siempre que esté disponible; si no, fallback controlado.
+    //    La extensión guardada siempre coincide con el formato real escrito en disco.
+    if (function_exists('imagewebp')) {
+        $extensionPublica = 'webp';
+        imagesavealpha($imagen, true);
+        $guardadoOk = imagewebp($imagen, $directorioPublico . $identificador . '.webp', 75);
+    } elseif ($tieneAlfaOrigen) {
+        $extensionPublica = 'png';
+        imagesavealpha($imagen, true);
+        $guardadoOk = imagepng($imagen, $directorioPublico . $identificador . '.png', 6);
+    } else {
+        $extensionPublica = 'jpg';
+        // JPEG no soporta transparencia: se compone sobre fondo blanco antes de exportar
+        $imagenJpeg = imagecreatetruecolor($ancho, $alto);
+        $blanco = imagecolorallocate($imagenJpeg, 255, 255, 255);
+        imagefill($imagenJpeg, 0, 0, $blanco);
+        imagealphablending($imagenJpeg, true);
+        imagecopy($imagenJpeg, $imagen, 0, 0, 0, 0, $ancho, $alto);
+        $guardadoOk = imagejpeg($imagenJpeg, $directorioPublico . $identificador . '.jpg', 82);
+        imagedestroy($imagenJpeg);
+    }
+
+    imagedestroy($imagen);
+
+    if (!$guardadoOk) {
+        unlink($rutaOriginal);
+        return ['ok' => false, 'error' => 'No se pudo procesar la imagen. Probá con otro archivo.'];
+    }
+
+    return [
+        'ok' => true,
+        'imagen' => 'assets/images/obras/' . $identificador . '.' . $extensionPublica,
+        'original' => 'storage/obras_originales/' . $identificador . '.' . $extension,
+    ];
+}
+
 
 // --- Resolver artista desde la sesión, nunca desde el formulario ---
 $consultaArtista = $conexion->prepare('SELECT id FROM artistas WHERE usuario_id = :usuario');
@@ -31,7 +194,6 @@ unset($_SESSION['publicar_errores'], $_SESSION['publicar_valores'], $_SESSION['p
 
 $categorias = $conexion->query('SELECT id, nombre FROM categorias ORDER BY nombre ASC')->fetchAll();
 
-const TIPOS_PERMITIDOS = ['digital', 'fisica'];
 const EXTENSIONES_PERMITIDAS = [
     'jpg'  => 'image/jpeg',
     'jpeg' => 'image/jpeg',
@@ -39,6 +201,7 @@ const EXTENSIONES_PERMITIDAS = [
     'webp' => 'image/webp',
 ];
 const TAMANO_MAXIMO_IMAGEN = 5 * 1024 * 1024; // 5 MB
+const MEGAPIXELES_MAXIMOS = 25_000_000; // ~25 MP, evita reservar memoria con imágenes desproporcionadas
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -104,39 +267,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // gallery/publicar.php — REEMPLAZAR SOLO ESTE BLOQUE ("Validación de archivo" completo)
     // --- Validación de archivo ---
     $rutaImagenGuardada = null;
+    $rutaOriginalGuardada = null;
     $archivo = $_FILES['imagen'] ?? null;
 
-    if (!$archivo || $archivo['error'] === UPLOAD_ERR_NO_FILE) {
+        if (!$archivo || $archivo['error'] === UPLOAD_ERR_NO_FILE) {
         $errores[] = 'Debés subir una imagen de la obra.';
-    } elseif ($archivo['error'] !== UPLOAD_ERR_OK) {
-        $errores[] = 'Ocurrió un error al subir la imagen.';
-    } elseif ($archivo['size'] > TAMANO_MAXIMO_IMAGEN) {
-        $errores[] = 'La imagen no puede superar los 5 MB.';
     } else {
-        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        $mimeReal = mime_content_type($archivo['tmp_name']);
+        $resultadoArchivo = validarArchivoImagen($archivo, TAMANO_MAXIMO_IMAGEN, EXTENSIONES_PERMITIDAS);
 
-        $extensionValida = array_key_exists($extension, EXTENSIONES_PERMITIDAS);
-        $mimeValido = $extensionValida && $mimeReal === EXTENSIONES_PERMITIDAS[$extension];
-
-        if (!$extensionValida || !$mimeValido) {
-            $errores[] = 'La imagen debe ser JPG, PNG o WEBP.';
+        if (!$resultadoArchivo['ok']) {
+            $errores[] = $resultadoArchivo['error'];
         } else {
-            $nombreArchivo = bin2hex(random_bytes(16)) . '.' . $extension;
-            $directorioDestino = __DIR__ . '/../assets/images/obras/';
+            $resultadoDimensiones = validarDimensionesImagen($archivo['tmp_name'], MEGAPIXELES_MAXIMOS);
 
-            if (!is_dir($directorioDestino)) {
-                mkdir($directorioDestino, 0755, true);
-            }
-
-            $rutaDestino = $directorioDestino . $nombreArchivo;
-
-            if (move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
-                $rutaImagenGuardada = 'assets/images/obras/' . $nombreArchivo;
+            if (!$resultadoDimensiones['ok']) {
+                $errores[] = $resultadoDimensiones['error'];
             } else {
-                $errores[] = 'No se pudo guardar la imagen. Intentá nuevamente.';
+                $resultado = procesarImagenObra($archivo['tmp_name'], $resultadoArchivo['extension']);
+
+                if ($resultado['ok']) {
+                    $rutaImagenGuardada = $resultado['imagen'];
+                    $rutaOriginalGuardada = $resultado['original'];
+                } else {
+                    $errores[] = $resultado['error'];
+                }
             }
         }
     }
@@ -162,22 +319,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: publicar.php');
             exit;
 
+        // gallery/publicar.php — REEMPLAZAR SOLO ESTE BLOQUE (limpieza: ahora borra público + original en el catch de PDO)
         } catch (PDOException $e) {
             // No se expone el mensaje real de PDO al usuario.
-            // Si el archivo ya se guardó y el INSERT falla, se elimina para no dejar huérfanos.
-            if ($rutaImagenGuardada !== null) {
-                $rutaAbsoluta = __DIR__ . '/../' . $rutaImagenGuardada;
-                if (is_file($rutaAbsoluta)) {
-                    unlink($rutaAbsoluta);
+            // Si los archivos ya se guardaron y el INSERT falla, se eliminan para no dejar huérfanos.
+            foreach ([$rutaImagenGuardada, $rutaOriginalGuardada] as $ruta) {
+                if ($ruta !== null) {
+                    $rutaAbsoluta = __DIR__ . '/../' . $ruta;
+                    if (is_file($rutaAbsoluta)) {
+                        unlink($rutaAbsoluta);
+                    }
                 }
             }
             $errores[] = 'No se pudo publicar la obra. Intentá nuevamente.';
         }
-    } elseif ($rutaImagenGuardada !== null) {
-        // Datos inválidos pero la imagen ya se había guardado: se limpia.
-        $rutaAbsoluta = __DIR__ . '/../' . $rutaImagenGuardada;
-        if (is_file($rutaAbsoluta)) {
-            unlink($rutaAbsoluta);
+    } elseif ($rutaImagenGuardada !== null || $rutaOriginalGuardada !== null) {
+        // Datos inválidos pero los archivos ya se habían guardado: se limpian.
+        foreach ([$rutaImagenGuardada, $rutaOriginalGuardada] as $ruta) {
+            if ($ruta !== null) {
+                $rutaAbsoluta = __DIR__ . '/../' . $ruta;
+                if (is_file($rutaAbsoluta)) {
+                    unlink($rutaAbsoluta);
+                }
+            }
         }
     }
 
