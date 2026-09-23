@@ -1,23 +1,5 @@
 <?php
 
-const EXTENSIONES_PERMITIDAS = [
-    'jpg'  => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'png'  => 'image/png',
-    'webp' => 'image/webp',
-];
-const TAMANO_MAXIMO_IMAGEN = 5 * 1024 * 1024;
-const MEGAPIXELES_MAXIMOS = 25_000_000;
-const TIPOS_PERMITIDOS = ['digital', 'fisica'];
-const ANCHO_MAXIMO_PUBLICO = 1400;
-
-function procesarImagenObra(string $tmpPath, string $extension): array
-{
-    if (!function_exists('imagecreatetruecolor')) {
-        return ['ok' => false, 'error' => 'El servidor no tiene soporte de procesamiento de imágenes (GD) habilitado.'];
-    }
-}
-
 function validarArchivoImagen(array $archivo, int $tamanoMaximo, array $extensionesPermitidas): array
 {
     if ($archivo['error'] !== UPLOAD_ERR_OK) {
