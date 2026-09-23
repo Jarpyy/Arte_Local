@@ -115,7 +115,12 @@ try {
         'INSERT INTO pedido_items (pedido_id, obra_id, titulo, tipo, precio_unitario, cantidad)
          VALUES (:pedido, :obra, :titulo, :tipo, :precio, :cantidad)'
     );
-    $descontarStock = $conexion->prepare('UPDATE obras SET stock = stock - :cantidad WHERE id = :id');
+    $descontarStock = $conexion->prepare(
+        'UPDATE obras
+         SET stock = stock - :cantidad,
+             disponible = IF(stock - :cantidad <= 0, 0, disponible)
+         WHERE id = :id'
+    );
 
     foreach ($items as $item) {
         $insertarItem->execute([
@@ -128,13 +133,13 @@ try {
         ]);
 
         if ($item['tipo'] === 'fisica') {
+            // Descuenta stock y, si llega a 0, marca disponible=0 en el mismo UPDATE
+            // atómico, dentro del FOR UPDATE. Así la galería y el carrito reflejan
+            // el agotamiento inmediatamente sin necesitar acción manual del admin.
             $descontarStock->execute([
                 'cantidad' => $item['cantidad'],
                 'id' => $item['obra_id'],
             ]);
-            // Si stock queda en 0, la fórmula de disponibilidad ya usada en todo el
-            // proyecto (disponible=1 && stock>0) lo muestra como "Agotado" sola,
-            // sin necesitar una columna "vendida".
         }
     }
 

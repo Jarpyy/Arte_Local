@@ -4,12 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/validacion.php';
 
-requerirAutenticacion('../login.php');
-
-if (($_SESSION['usuario_rol'] ?? null) !== 'admin') {
-    header('Location: ../dashboard.php');
-    exit;
-}
+requerirRol('admin');
 
 $csrfToken = tokenCSRF();
 
@@ -368,6 +363,7 @@ $obraIdForm = $valoresForm['obra_id'] ?? ($obraEditando['id'] ?? null);
             <a href="dashboard.php">Panel</a>
             <a href="obras.php" class="activo">Obras</a>
             <a href="pedidos.php">Pedidos</a>
+            <a href="categorias.php">Categorías</a>
             <a href="usuarios.php">Usuarios</a>
             <a href="../logout.php">Cerrar sesión</a>
         </nav>

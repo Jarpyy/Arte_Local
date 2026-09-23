@@ -3,13 +3,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 
-requerirAutenticacion('../login.php');
-
-// --- Gatekeeping inverso: un cliente no puede ver el panel admin ---
-if (($_SESSION['usuario_rol'] ?? null) !== 'admin') {
-    header('Location: ../dashboard.php');
-    exit;
-}
+requerirRol('admin');
 
 $totalObras = (int) $conexion->query('SELECT COUNT(*) FROM obras')->fetchColumn();
 $totalPedidos = (int) $conexion->query('SELECT COUNT(*) FROM pedidos')->fetchColumn();
@@ -32,6 +26,7 @@ $totalUsuarios = (int) $conexion->query('SELECT COUNT(*) FROM usuarios')->fetchC
             <a href="dashboard.php" class="activo">Panel</a>
             <a href="obras.php">Obras</a>
             <a href="pedidos.php">Pedidos</a>
+            <a href="categorias.php">Categorías</a>
             <a href="usuarios.php">Usuarios</a>
             <a href="../logout.php">Cerrar sesión</a>
         </nav>

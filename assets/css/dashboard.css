@@ -991,3 +991,32 @@ dialog::backdrop {
         padding: 1rem;
     }
 }
+
+/* =========================================
+   ALERTAS FLASH (éxito / error)
+   Usadas en panel admin para mensajes PRG.
+   ========================================= */
+.alerta {
+    padding: 0.85rem 1.1rem;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.5;
+    backdrop-filter: blur(6px);
+}
+
+.alerta p { margin: 0.2rem 0 0; }
+.alerta p:first-child { margin-top: 0; }
+
+.alerta--error {
+    background: rgba(226, 86, 74, 0.14);
+    border: 1px solid rgba(226, 86, 74, 0.45);
+    color: var(--dash-rojo-deep);
+}
+
+.alerta--exito {
+    background: rgba(47, 158, 79, 0.13);
+    border: 1px solid rgba(47, 158, 79, 0.4);
+    color: #1a5e30;
+}

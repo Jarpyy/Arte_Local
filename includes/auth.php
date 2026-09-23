@@ -47,6 +47,33 @@ function requerirAutenticacion(string $rutaLogin = 'login.php'): void
 }
 
 /**
+ * Exige autenticación Y que el usuario tenga el rol indicado.
+ * Si no está autenticado → redirige a login.
+ * Si está autenticado pero no tiene el rol → redirige al dashboard del cliente.
+ *
+ * Uso recomendado al inicio de cada página del panel admin:
+ *   requerirRol('admin');
+ *
+ * @param string $rol         Rol requerido ('admin', 'cliente', etc.)
+ * @param string $rutaLogin   Ruta relativa a login.php
+ * @param string $rutaFallback Ruta a la que redirigir si el rol no coincide
+ */
+function requerirRol(string $rol, string $rutaLogin = '../login.php', string $rutaFallback = '../dashboard.php'): void
+{
+    iniciarSesionSegura();
+
+    if (empty($_SESSION['usuario_id'])) {
+        header('Location: ' . $rutaLogin);
+        exit;
+    }
+
+    if (($_SESSION['usuario_rol'] ?? null) !== $rol) {
+        header('Location: ' . $rutaFallback);
+        exit;
+    }
+}
+
+/**
  * Si ya hay una sesión activa, redirige lejos de páginas públicas
  * (login, register, landing) hacia el dashboard.
  *

@@ -3,12 +3,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 
-requerirAutenticacion('../login.php');
-
-if (($_SESSION['usuario_rol'] ?? null) !== 'admin') {
-    header('Location: ../dashboard.php');
-    exit;
-}
+requerirRol('admin');
 
 $pedidos = $conexion->query(
     'SELECT p.id, p.estado, p.total, p.created_at, u.nombre AS usuario_nombre, u.email
@@ -40,6 +35,7 @@ $badgePedido = [
             <a href="dashboard.php">Panel</a>
             <a href="obras.php">Obras</a>
             <a href="pedidos.php" class="activo">Pedidos</a>
+            <a href="categorias.php">Categorías</a>
             <a href="usuarios.php">Usuarios</a>
             <a href="../logout.php">Cerrar sesión</a>
         </nav>
